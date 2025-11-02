@@ -1,0 +1,18 @@
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  application:
+    name: tour-package-be
+  datasource:
+    url: ${DATABASE_URL_DEV}
+    username: ${DEV_USERNAME}
+    password: ${DEV_PASSWORD}
+  mvc:
+    hiddenmethod:
+      filter:
+        enabled: true
+  profiles:
+    active: 'dev'
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
