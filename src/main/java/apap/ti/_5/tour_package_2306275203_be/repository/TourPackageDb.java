@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface TourPackageDb extends JpaRepository<TourPackage, String> {
+        long countByUserId(String userId);
 }

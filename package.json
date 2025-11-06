@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@tanstack/vue-table": "^8.21.3",
+    "axios": "^1.13.1",
+    "date-fns": "^4.1.0",
+    "pinia": "^3.0.3",
+    "vue-sonner": "^2.0.9"
+  }
+}
