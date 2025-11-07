@@ -9,12 +9,17 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "ordered_quantity")
+@SQLDelete(sql = "UPDATE ordered_quantity SET is_deleted = true WHERE id=?")
+@Where(clause = "is_deleted=false")
 public class OrderedQuantity {
 
     @Id
@@ -43,4 +48,7 @@ public class OrderedQuantity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "activity_id", referencedColumnName = "id")
     private Activity activity;
+
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false;
 }

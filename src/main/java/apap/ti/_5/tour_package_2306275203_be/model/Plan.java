@@ -10,12 +10,17 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "plan")
+@SQLDelete(sql = "UPDATE plan SET is_deleted = true WHERE id=?")
+@Where(clause = "is_deleted=false")
 public class Plan {
 
     @Id
@@ -52,4 +57,7 @@ public class Plan {
 
     @OneToMany(mappedBy = "plan", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<OrderedQuantity> listOrderedQuantity;
+
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false;
 }
