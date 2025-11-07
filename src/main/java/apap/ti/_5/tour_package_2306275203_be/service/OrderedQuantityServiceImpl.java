@@ -7,6 +7,7 @@ import apap.ti._5.tour_package_2306275203_be.repository.*;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
@@ -78,49 +79,54 @@ public void removeActivityFromPlan(UUID orderedQuantityId) {
 
 private void validateActivityAddition(Plan plan, Activity activity, int newOrderedQuota) {
     TourPackage tourPackage = plan.getTourPackage();
+
     if (!"Pending".equals(tourPackage.getStatus())) {
         throw new IllegalStateException("Cannot modify a processed package.");
     }
     if (!activity.getActivityType().equals(plan.getActivityType())) {
         throw new IllegalArgumentException("Activity type does not match plan's activity type.");
     }
-
-    if (activity.getStartDate().isBefore(plan.getStartDate())) {
-        throw new IllegalArgumentException("Activity start date cannot be before the plan's start date.");
+    if (activity.getStartDate().isBefore(plan.getStartDate()) || activity.getEndDate().isAfter(plan.getEndDate())) {
+        throw new IllegalArgumentException("Activity's date range must be within the plan's date range.");
     }
-    if (activity.getEndDate().isAfter(plan.getEndDate())) {
-        throw new IllegalArgumentException("Activity end date cannot be after the plan's end date.");
-    }
-
     if (newOrderedQuota > activity.getCapacity()) {
         throw new IllegalArgumentException("Ordered quantity exceeds activity capacity.");
     }
 
-    int currentTotalQuotaInPlan = plan.getListOrderedQuantity().stream()
-            .mapToInt(OrderedQuantity::getOrderedQuota)
-            .sum();
+
+    int currentTotalQuotaInPlan = plan.getListOrderedQuantity() != null ? 
+                                   plan.getListOrderedQuantity().stream().mapToInt(OrderedQuantity::getOrderedQuota).sum() : 0;
 
     if ((currentTotalQuotaInPlan + newOrderedQuota) > tourPackage.getQuota()) {
-        throw new IllegalArgumentException("Total ordered quantity in plan exceeds package quota.");
+        throw new IllegalArgumentException("Total ordered quantity for this plan cannot exceed the package quota of " + tourPackage.getQuota());
     }
 }
 
-    private void recalculatePlanAndUpdateStatus(Plan plan) {
-        long newPlanPrice = plan.getListOrderedQuantity().stream()
-                .mapToLong(o -> o.getPrice() * o.getOrderedQuota())
-                .sum();
-        plan.setPrice(newPlanPrice);
+private void recalculatePlanAndUpdateStatus(Plan plan) {
+    Plan freshPlan = planDb.findById(plan.getId()).orElseThrow();
+    TourPackage tourPackage = freshPlan.getTourPackage();
+    
+    List<OrderedQuantity> orderedQuantitiesForPlan = orderedQuantityDb.findByPlan(freshPlan);
 
-        int totalOrdered = plan.getListOrderedQuantity().stream().mapToInt(OrderedQuantity::getOrderedQuota).sum();
-        if (totalOrdered == plan.getTourPackage().getQuota()) {
-            plan.setStatus("Fulfilled");
-        } else {
-            plan.setStatus("Unfulfilled");
-        }
-        planDb.save(plan);
+    long newPlanPrice = orderedQuantitiesForPlan.stream()
+            .mapToLong(o -> o.getPrice() * o.getOrderedQuota())
+            .sum();
+    freshPlan.setPrice(newPlanPrice);
 
-        recalculatePackagePrice(plan.getTourPackage());
+    int totalOrderedInPlan = orderedQuantitiesForPlan.stream()
+            .mapToInt(OrderedQuantity::getOrderedQuota)
+            .sum();
+
+    if (totalOrderedInPlan == tourPackage.getQuota()) {
+        freshPlan.setStatus("Fulfilled");
+    } else {
+        freshPlan.setStatus("Unfulfilled");
     }
+
+    planDb.save(freshPlan);
+
+    recalculatePackagePrice(tourPackage);
+}
 
     private void recalculatePackagePrice(TourPackage tourPackage) {
         long newPackagePrice = tourPackage.getListPlan().stream()
