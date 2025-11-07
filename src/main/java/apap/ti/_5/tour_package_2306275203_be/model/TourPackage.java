@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-// Import anotasi baru
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 

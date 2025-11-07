@@ -129,7 +129,7 @@ public class DataLoader implements CommandLineRunner {
                 System.out.println("No activities available to attach to packages. Skipping package creation.");
             } else {
                 for (String user : sampleUsers) {
-                    int userPackageCount = 1 + rand.nextInt(3); // 1..3 packages per user
+                    int userPackageCount = 1 + rand.nextInt(3);
                     for (int p = 0; p < userPackageCount; p++) {
                         long userCount = tourPackageDb.countByUserId(user);
                         String packageId = String.format("PACK-%s-%03d", user, userCount + 1);
