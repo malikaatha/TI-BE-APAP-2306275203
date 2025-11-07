@@ -33,11 +33,9 @@ public class DataLoader implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        // Activities
         if (activityDb.count() == 0) {
             System.out.println("Database Activity kosong, mengisi dengan data dummy...");
 
-            // 1. Flight di Awal November
             Activity flightNov1 = new Activity();
             flightNov1.setId("FLIGHT-NOV-001");
             flightNov1.setActivityName("Garuda Indonesia: Jakarta - Bali");
@@ -52,7 +50,6 @@ public class DataLoader implements CommandLineRunner {
             flightNov1.setEndLocation("Bali (Provinsi)");
             activityDb.save(flightNov1);
 
-            // 2. Flight di Pertengahan November
             Activity flightNov2 = new Activity();
             flightNov2.setId("FLIGHT-NOV-002");
             flightNov2.setActivityName("Citilink: Jakarta - Bali");
@@ -67,7 +64,6 @@ public class DataLoader implements CommandLineRunner {
             flightNov2.setEndLocation("Bali (Provinsi)");
             activityDb.save(flightNov2);
 
-            // 3. Akomodasi di Bali
             Activity hotelBali = new Activity();
             hotelBali.setId("HOTEL-BALI-001");
             hotelBali.setActivityName("Menginap di The Anvaya Beach Resort");
@@ -75,7 +71,7 @@ public class DataLoader implements CommandLineRunner {
             hotelBali.setCapacity(30);
             hotelBali.setPrice(1800000L);
             hotelBali.setActivityType("Accommodation");
-            // Akomodasi biasanya rentangnya lebih lebar
+
             LocalDateTime hotelStart = LocalDateTime.of(2025, 11, 5, 14, 0);
             hotelBali.setStartDate(hotelStart);
             hotelBali.setEndDate(LocalDateTime.of(2025, 11, 10, 12, 0));
@@ -83,7 +79,6 @@ public class DataLoader implements CommandLineRunner {
             hotelBali.setEndLocation("Bali (Provinsi)"); // Untuk akomodasi, lokasi sama
             activityDb.save(hotelBali);
 
-            // 4. Sewa Mobil di Bali
             Activity carBali = new Activity();
             carBali.setId("CAR-BALI-001");
             carBali.setActivityName("Sewa Toyota Avanza (Lepas Kunci)");
@@ -98,7 +93,6 @@ public class DataLoader implements CommandLineRunner {
             carBali.setEndLocation("Bali (Provinsi)");
             activityDb.save(carBali);
             
-            // 5. Flight di Bulan Lain (untuk tes filter)
             Activity flightDec = new Activity();
             flightDec.setId("FLIGHT-DEC-001");
             flightDec.setActivityName("AirAsia: Jakarta - Bali");
@@ -116,7 +110,6 @@ public class DataLoader implements CommandLineRunner {
             System.out.println("Data dummy Activity berhasil dibuat.");
         }
 
-        // TourPackages, Plans, OrderedQuantities
         if (tourPackageDb.count() == 0) {
             System.out.println("Database Package kosong, mengisi dengan data dummy package/plan/orderedQuantity...");
 
@@ -131,7 +124,6 @@ public class DataLoader implements CommandLineRunner {
                     .endDate(LocalDateTime.of(2025, 11, 12, 23, 59))
                     .build();
 
-            // Plans for the package
             Plan planFlight = new Plan();
             planFlight.setPlanName("Flight to Bali");
             planFlight.setActivityType("Flight");
@@ -159,15 +151,12 @@ public class DataLoader implements CommandLineRunner {
             plans.add(planHotel);
             pkg.setListPlan(plans);
 
-            // Save package (cascades plans)
             TourPackage savedPkg = tourPackageDb.save(pkg);
 
-            // Create ordered quantities referencing activities created above
             Optional<Activity> optFlight = activityDb.findById("FLIGHT-NOV-001");
             Optional<Activity> optHotel = activityDb.findById("HOTEL-BALI-001");
 
             if (optFlight.isPresent() && optHotel.isPresent()) {
-                // Find persisted plans (they have generated UUIDs)
                 Plan persistedFlightPlan = savedPkg.getListPlan().stream()
                         .filter(p -> "Flight to Bali".equals(p.getPlanName()))
                         .findFirst().orElse(null);
@@ -202,11 +191,12 @@ public class DataLoader implements CommandLineRunner {
                     orderedQuantityDb.save(oq2);
                 }
 
-                // Update plan/package prices after adding ordered quantities
                 for (Plan p : savedPkg.getListPlan()) {
+                    List<OrderedQuantity> oqsForThisPlan = orderedQuantityDb.findByPlan(p);
+                    
                     long planPrice = 0L;
-                    if (p.getListOrderedQuantity() != null) {
-                        for (OrderedQuantity oq : p.getListOrderedQuantity()) {
+                    if (oqsForThisPlan != null) {
+                        for (OrderedQuantity oq : oqsForThisPlan) {
                             planPrice += (oq.getPrice() * oq.getOrderedQuota());
                         }
                     }

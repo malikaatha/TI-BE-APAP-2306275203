@@ -38,11 +38,14 @@ public class PlanServiceImpl implements PlanService {
             throw new IllegalStateException("Plans can only be added to 'Pending' packages.");
         }
 
-        if (dto.getEndDate().isBefore(dto.getStartDate())) {
-            throw new IllegalArgumentException("Plan end date cannot be before start date.");
-        }
         if (dto.getStartDate().isBefore(tourPackage.getStartDate())) {
             throw new IllegalArgumentException("Plan start date cannot be before package start date.");
+        }
+        if (dto.getEndDate().isAfter(tourPackage.getEndDate())) {
+            throw new IllegalArgumentException("Plan end date cannot be after package end date.");
+        }
+        if (dto.getEndDate().isBefore(dto.getStartDate())) {
+            throw new IllegalArgumentException("Plan end date cannot be before its start date.");
         }
         if (dto.getEndDate().isAfter(tourPackage.getEndDate())) {
             throw new IllegalArgumentException("Plan end date cannot be after package end date.");
@@ -116,7 +119,10 @@ public static PlanResponseDTO convertToResponseDTO(Plan plan) {
                 oq.getOrderedQuota(),
                 oq.getPrice(),
                 oq.getActivity().getActivityName(),
-                oq.getActivity().getId()
+                oq.getActivity().getId(),
+                oq.getActivity().getCapacity(),
+                oq.getStartDate(), 
+                oq.getEndDate()
             )).collect(Collectors.toList());
     }
 

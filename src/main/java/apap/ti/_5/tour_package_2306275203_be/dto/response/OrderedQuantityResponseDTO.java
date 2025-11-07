@@ -15,4 +15,8 @@ public class OrderedQuantityResponseDTO {
     private Long price;
     private String activityName;
     private String activityId;
+
+    private int capacity;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
 }
