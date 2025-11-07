@@ -2,6 +2,7 @@ package apap.ti._5.tour_package_2306275203_be.controller;
 
 import apap.ti._5.tour_package_2306275203_be.dto.response.RevenueByActivityTypeDTO;
 import apap.ti._5.tour_package_2306275203_be.service.StatisticsService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,11 +16,8 @@ import java.util.List;
 @RequestMapping("/statistics")
 @CrossOrigin(origins = "http://localhost:5173")
 public class StatisticsController {
-    private final StatisticsService statisticsService;
 
-    public StatisticsController(StatisticsService statisticsService) {
-        this.statisticsService = statisticsService;
-    }
+    private final StatisticsService statisticsService;
 
     // Fitur 15: Statistik Potensial Revenue
     @GetMapping("")

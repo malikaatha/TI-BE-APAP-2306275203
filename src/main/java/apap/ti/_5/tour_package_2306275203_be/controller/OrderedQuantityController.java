@@ -3,7 +3,6 @@ package apap.ti._5.tour_package_2306275203_be.controller;
 import apap.ti._5.tour_package_2306275203_be.dto.request.CreateOrderedQuantityRequestDTO;
 import apap.ti._5.tour_package_2306275203_be.dto.request.UpdateOrderedQuantityRequestDTO;
 import apap.ti._5.tour_package_2306275203_be.service.OrderedQuantityService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,9 +14,11 @@ import java.util.UUID;
 @RequestMapping("/ordered-activities")
 @CrossOrigin(origins = "http://localhost:5173")
 public class OrderedQuantityController {
+    private final OrderedQuantityService orderedQuantityService;
 
-    @Autowired
-    private OrderedQuantityService orderedQuantityService;
+    public OrderedQuantityController(OrderedQuantityService orderedQuantityService) {
+        this.orderedQuantityService = orderedQuantityService;
+    }
 
     // Fitur 11: Add Ordered Activities to Plan
     @PostMapping("/create/plan/{planId}")

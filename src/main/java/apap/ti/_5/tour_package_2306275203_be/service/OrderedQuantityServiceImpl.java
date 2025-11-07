@@ -5,7 +5,6 @@ import apap.ti._5.tour_package_2306275203_be.dto.request.UpdateOrderedQuantityRe
 import apap.ti._5.tour_package_2306275203_be.model.*;
 import apap.ti._5.tour_package_2306275203_be.repository.*;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.NoSuchElementException;
@@ -15,16 +14,22 @@ import java.util.UUID;
 @Transactional
 public class OrderedQuantityServiceImpl implements OrderedQuantityService {
 
-    @Autowired private OrderedQuantityDb orderedQuantityDb;
-    @Autowired private PlanDb planDb;
-    @Autowired private ActivityDb activityDb;
-    @Autowired private TourPackageDb tourPackageDb;
+    private final OrderedQuantityDb orderedQuantityDb;
+    private final PlanDb planDb;
+    private final ActivityDb activityDb;
+    private final TourPackageDb tourPackageDb;
+
+    public OrderedQuantityServiceImpl(OrderedQuantityDb orderedQuantityDb, PlanDb planDb, ActivityDb activityDb, TourPackageDb tourPackageDb) {
+        this.orderedQuantityDb = orderedQuantityDb;
+        this.planDb = planDb;
+        this.activityDb = activityDb;
+        this.tourPackageDb = tourPackageDb;
+    }
 
     @Override
     public void addActivityToPlan(UUID planId, CreateOrderedQuantityRequestDTO dto) {
         Plan plan = planDb.findById(planId).orElseThrow(() -> new NoSuchElementException("Plan not found"));
-        Activity activity = activityDb.findById(dto.getActivityId()).orElseThrow(() -> new NoSuchElementException("Activity not found"));
-        TourPackage tourPackage = plan.getTourPackage();
+    Activity activity = activityDb.findById(dto.getActivityId()).orElseThrow(() -> new NoSuchElementException("Activity not found"));
 
         validateActivityAddition(plan, activity, dto.getOrderedQuota());
 

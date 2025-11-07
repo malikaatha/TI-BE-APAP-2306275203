@@ -2,7 +2,6 @@ package apap.ti._5.tour_package_2306275203_be.controller;
 
 import apap.ti._5.tour_package_2306275203_be.dto.response.ActivityResponseDTO;
 import apap.ti._5.tour_package_2306275203_be.service.ActivityService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,9 +14,11 @@ import java.util.UUID;
 @RequestMapping("/activities")
 @CrossOrigin(origins = "http://localhost:5173")
 public class ActivityController {
+    private final ActivityService activityService;
 
-    @Autowired
-    private ActivityService activityService;
+    public ActivityController(ActivityService activityService) {
+        this.activityService = activityService;
+    }
 
     @GetMapping("")
     public ResponseEntity<?> getActivities(@RequestParam(value = "planId", required = false) UUID planId) {

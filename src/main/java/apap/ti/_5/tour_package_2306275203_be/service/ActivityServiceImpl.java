@@ -5,7 +5,6 @@ import apap.ti._5.tour_package_2306275203_be.model.Activity;
 import apap.ti._5.tour_package_2306275203_be.model.Plan;
 import apap.ti._5.tour_package_2306275203_be.repository.ActivityDb;
 import apap.ti._5.tour_package_2306275203_be.repository.PlanDb;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,12 +14,14 @@ import java.util.stream.Collectors;
 
 @Service
 public class ActivityServiceImpl implements ActivityService {
+        private final ActivityDb activityDb;
 
-    @Autowired
-    private ActivityDb activityDb;
-    
-    @Autowired
-    private PlanDb planDb;
+        private final PlanDb planDb;
+
+        public ActivityServiceImpl(ActivityDb activityDb, PlanDb planDb) {
+                this.activityDb = activityDb;
+                this.planDb = planDb;
+        }
 
     @Override
     public List<ActivityResponseDTO> getAllActivities() {

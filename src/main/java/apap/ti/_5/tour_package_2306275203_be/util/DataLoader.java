@@ -1,25 +1,41 @@
 package apap.ti._5.tour_package_2306275203_be.util;
 
 import apap.ti._5.tour_package_2306275203_be.model.Activity;
+import apap.ti._5.tour_package_2306275203_be.model.OrderedQuantity;
+import apap.ti._5.tour_package_2306275203_be.model.Plan;
+import apap.ti._5.tour_package_2306275203_be.model.TourPackage;
 import apap.ti._5.tour_package_2306275203_be.repository.ActivityDb;
-import com.github.javafaker.Faker;
-import org.springframework.beans.factory.annotation.Autowired;
+import apap.ti._5.tour_package_2306275203_be.repository.OrderedQuantityDb;
+import apap.ti._5.tour_package_2306275203_be.repository.PlanDb;
+import apap.ti._5.tour_package_2306275203_be.repository.TourPackageDb;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Component
 public class DataLoader implements CommandLineRunner {
 
-    @Autowired
-    private ActivityDb activityDb;
+    private final ActivityDb activityDb;
+    private final TourPackageDb tourPackageDb;
+    private final PlanDb planDb;
+    private final OrderedQuantityDb orderedQuantityDb;
+
+    public DataLoader(ActivityDb activityDb, TourPackageDb tourPackageDb, PlanDb planDb, OrderedQuantityDb orderedQuantityDb) {
+        this.activityDb = activityDb;
+        this.tourPackageDb = tourPackageDb;
+        this.planDb = planDb;
+        this.orderedQuantityDb = orderedQuantityDb;
+    }
 
     @Override
     public void run(String... args) throws Exception {
+        // Activities
         if (activityDb.count() == 0) {
             System.out.println("Database Activity kosong, mengisi dengan data dummy...");
-            Faker faker = new Faker();
 
             // 1. Flight di Awal November
             Activity flightNov1 = new Activity();
@@ -97,7 +113,113 @@ public class DataLoader implements CommandLineRunner {
             flightDec.setEndLocation("Bali (Provinsi)");
             activityDb.save(flightDec);
 
-            System.out.println("Data dummy berhasil dibuat.");
+            System.out.println("Data dummy Activity berhasil dibuat.");
+        }
+
+        // TourPackages, Plans, OrderedQuantities
+        if (tourPackageDb.count() == 0) {
+            System.out.println("Database Package kosong, mengisi dengan data dummy package/plan/orderedQuantity...");
+
+            TourPackage pkg = TourPackage.builder()
+                    .id("PACK-U1-001")
+                    .userId("U1")
+                    .packageName("Bali Getaway")
+                    .quota(10)
+                    .price(0L)
+                    .status("Pending")
+                    .startDate(LocalDateTime.of(2025, 11, 5, 0, 0))
+                    .endDate(LocalDateTime.of(2025, 11, 12, 23, 59))
+                    .build();
+
+            // Plans for the package
+            Plan planFlight = new Plan();
+            planFlight.setPlanName("Flight to Bali");
+            planFlight.setActivityType("Flight");
+            planFlight.setStartDate(LocalDateTime.of(2025, 11, 5, 9, 0));
+            planFlight.setEndDate(LocalDateTime.of(2025, 11, 5, 11, 0));
+            planFlight.setStartLocation("DKI Jakarta (Provinsi)");
+            planFlight.setEndLocation("Bali (Provinsi)");
+            planFlight.setPrice(0L);
+            planFlight.setStatus("Unfulfilled");
+            planFlight.setTourPackage(pkg);
+
+            Plan planHotel = new Plan();
+            planHotel.setPlanName("Akomodasi di Bali");
+            planHotel.setActivityType("Accommodation");
+            planHotel.setStartDate(LocalDateTime.of(2025, 11, 5, 14, 0));
+            planHotel.setEndDate(LocalDateTime.of(2025, 11, 10, 12, 0));
+            planHotel.setStartLocation("Bali (Provinsi)");
+            planHotel.setEndLocation("Bali (Provinsi)");
+            planHotel.setPrice(0L);
+            planHotel.setStatus("Unfulfilled");
+            planHotel.setTourPackage(pkg);
+
+            List<Plan> plans = new ArrayList<>();
+            plans.add(planFlight);
+            plans.add(planHotel);
+            pkg.setListPlan(plans);
+
+            // Save package (cascades plans)
+            TourPackage savedPkg = tourPackageDb.save(pkg);
+
+            // Create ordered quantities referencing activities created above
+            Optional<Activity> optFlight = activityDb.findById("FLIGHT-NOV-001");
+            Optional<Activity> optHotel = activityDb.findById("HOTEL-BALI-001");
+
+            if (optFlight.isPresent() && optHotel.isPresent()) {
+                // Find persisted plans (they have generated UUIDs)
+                Plan persistedFlightPlan = savedPkg.getListPlan().stream()
+                        .filter(p -> "Flight to Bali".equals(p.getPlanName()))
+                        .findFirst().orElse(null);
+
+                Plan persistedHotelPlan = savedPkg.getListPlan().stream()
+                        .filter(p -> "Akomodasi di Bali".equals(p.getPlanName()))
+                        .findFirst().orElse(null);
+
+                if (persistedFlightPlan != null) {
+                    Activity a = optFlight.get();
+                    OrderedQuantity oq = new OrderedQuantity();
+                    oq.setPlan(persistedFlightPlan);
+                    oq.setActivity(a);
+                    oq.setOrderedQuota(2);
+                    oq.setPrice(a.getPrice());
+                    oq.setQuota(a.getCapacity());
+                    oq.setStartDate(a.getStartDate());
+                    oq.setEndDate(a.getEndDate());
+                    orderedQuantityDb.save(oq);
+                }
+
+                if (persistedHotelPlan != null) {
+                    Activity a = optHotel.get();
+                    OrderedQuantity oq2 = new OrderedQuantity();
+                    oq2.setPlan(persistedHotelPlan);
+                    oq2.setActivity(a);
+                    oq2.setOrderedQuota(2);
+                    oq2.setPrice(a.getPrice());
+                    oq2.setQuota(a.getCapacity());
+                    oq2.setStartDate(a.getStartDate());
+                    oq2.setEndDate(a.getEndDate());
+                    orderedQuantityDb.save(oq2);
+                }
+
+                // Update plan/package prices after adding ordered quantities
+                for (Plan p : savedPkg.getListPlan()) {
+                    long planPrice = 0L;
+                    if (p.getListOrderedQuantity() != null) {
+                        for (OrderedQuantity oq : p.getListOrderedQuantity()) {
+                            planPrice += (oq.getPrice() * oq.getOrderedQuota());
+                        }
+                    }
+                    p.setPrice(planPrice);
+                    planDb.save(p);
+                }
+
+                long pkgPrice = savedPkg.getListPlan().stream().mapToLong(Plan::getPrice).sum();
+                savedPkg.setPrice(pkgPrice);
+                tourPackageDb.save(savedPkg);
+            }
+
+            System.out.println("Data dummy Package/Plan/OrderedQuantity berhasil dibuat.");
         }
     }
 }

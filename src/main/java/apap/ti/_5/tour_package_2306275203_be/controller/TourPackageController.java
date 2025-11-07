@@ -4,7 +4,6 @@ import apap.ti._5.tour_package_2306275203_be.dto.request.CreateTourPackageReques
 import apap.ti._5.tour_package_2306275203_be.dto.request.UpdateTourPackageRequestDTO;
 import apap.ti._5.tour_package_2306275203_be.dto.response.TourPackageResponseDTO;
 import apap.ti._5.tour_package_2306275203_be.service.TourPackageService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,9 +15,11 @@ import java.util.NoSuchElementException;
 @RequestMapping("/package")
 @CrossOrigin(origins = "http://localhost:5173")
 public class TourPackageController {
+    private final TourPackageService tourPackageService;
 
-    @Autowired
-    private TourPackageService tourPackageService;
+    public TourPackageController(TourPackageService tourPackageService) {
+        this.tourPackageService = tourPackageService;
+    }
 
     // Fitur 4: Create Package
     @PostMapping(value = "/create", consumes = "application/json", produces = "application/json")

@@ -4,7 +4,6 @@ import apap.ti._5.tour_package_2306275203_be.dto.request.CreatePlanRequestDTO;
 import apap.ti._5.tour_package_2306275203_be.dto.request.UpdatePlanRequestDTO;
 import apap.ti._5.tour_package_2306275203_be.dto.response.PlanResponseDTO;
 import apap.ti._5.tour_package_2306275203_be.service.PlanService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,9 +14,11 @@ import java.util.UUID;
 @RestController
 @CrossOrigin(origins = "http://localhost:5173")
 public class PlanController {
+    private final PlanService planService;
 
-    @Autowired
-    private PlanService planService;
+    public PlanController(PlanService planService) {
+        this.planService = planService;
+    }
 
     // Fitur 8: Create Plan
     @PostMapping("/packages/{packageId}/plans/create")

@@ -9,7 +9,6 @@ import apap.ti._5.tour_package_2306275203_be.model.TourPackage;
 import apap.ti._5.tour_package_2306275203_be.repository.PlanDb;
 import apap.ti._5.tour_package_2306275203_be.repository.TourPackageDb;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -21,12 +20,14 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class PlanServiceImpl implements PlanService {
+    private final PlanDb planDb;
 
-    @Autowired
-    private PlanDb planDb;
+    private final TourPackageDb tourPackageDb;
 
-    @Autowired
-    private TourPackageDb tourPackageDb;
+    public PlanServiceImpl(PlanDb planDb, TourPackageDb tourPackageDb) {
+        this.planDb = planDb;
+        this.tourPackageDb = tourPackageDb;
+    }
 
     @Override
     public PlanResponseDTO createPlan(String packageId, CreatePlanRequestDTO dto) {

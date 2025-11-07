@@ -3,7 +3,6 @@ package apap.ti._5.tour_package_2306275203_be.service;
 import apap.ti._5.tour_package_2306275203_be.dto.response.RevenueByActivityTypeDTO;
 import apap.ti._5.tour_package_2306275203_be.model.OrderedQuantity;
 import apap.ti._5.tour_package_2306275203_be.repository.OrderedQuantityDb;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,9 +11,11 @@ import java.util.stream.Collectors;
 
 @Service
 public class StatisticsServiceImpl implements StatisticsService {
+    private final OrderedQuantityDb orderedQuantityDb;
 
-    @Autowired
-    private OrderedQuantityDb orderedQuantityDb;
+    public StatisticsServiceImpl(OrderedQuantityDb orderedQuantityDb) {
+        this.orderedQuantityDb = orderedQuantityDb;
+    }
 
     @Override
     public List<RevenueByActivityTypeDTO> getPotentialRevenue(Integer year, Integer month) {

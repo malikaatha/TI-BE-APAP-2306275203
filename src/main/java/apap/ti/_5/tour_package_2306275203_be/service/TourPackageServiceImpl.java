@@ -11,7 +11,6 @@ import apap.ti._5.tour_package_2306275203_be.model.TourPackage;
 import apap.ti._5.tour_package_2306275203_be.repository.ActivityDb;
 import apap.ti._5.tour_package_2306275203_be.repository.TourPackageDb;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -22,12 +21,14 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class TourPackageServiceImpl implements TourPackageService {
+    private final TourPackageDb tourPackageDb;
 
-    @Autowired
-    private TourPackageDb tourPackageDb;
+    private final ActivityDb activityDb;
 
-    @Autowired
-    private ActivityDb activityDb;
+    public TourPackageServiceImpl(TourPackageDb tourPackageDb, ActivityDb activityDb) {
+        this.tourPackageDb = tourPackageDb;
+        this.activityDb = activityDb;
+    }
 
     @Override
     public TourPackageResponseDTO createTourPackage(CreateTourPackageRequestDTO dto) {
