@@ -10,9 +10,9 @@ import java.util.UUID;
 
 @Repository
 public interface OrderedQuantityDb extends JpaRepository<OrderedQuantity, UUID> {
-    @Query("SELECT oq FROM OrderedQuantity oq WHERE FUNCTION('YEAR', oq.startDate) = :year AND FUNCTION('MONTH', oq.startDate) = :month")
+    @Query(value = "SELECT * FROM ordered_quantity oq WHERE EXTRACT(YEAR FROM oq.start_date) = :year AND EXTRACT(MONTH FROM oq.start_date) = :month", nativeQuery = true)
     List<OrderedQuantity> findByYearAndMonth(int year, int month);
 
-    @Query("SELECT oq FROM OrderedQuantity oq WHERE FUNCTION('YEAR', oq.startDate) = :year")
+    @Query(value = "SELECT * FROM ordered_quantity oq WHERE EXTRACT(YEAR FROM oq.start_date) = :year", nativeQuery = true)
     List<OrderedQuantity> findByYear(int year);
 }
