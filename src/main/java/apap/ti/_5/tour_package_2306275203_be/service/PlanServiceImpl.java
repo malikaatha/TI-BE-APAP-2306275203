@@ -106,7 +106,7 @@ public class PlanServiceImpl implements PlanService {
         planDb.delete(plan);
     }
     
-private PlanResponseDTO convertToResponseDTO(Plan plan) {
+public static PlanResponseDTO convertToResponseDTO(Plan plan) {
     List<OrderedQuantityResponseDTO> orderedQuantities = new ArrayList<>();
     if (plan.getListOrderedQuantity() != null) {
         orderedQuantities = plan.getListOrderedQuantity().stream().map(oq -> 

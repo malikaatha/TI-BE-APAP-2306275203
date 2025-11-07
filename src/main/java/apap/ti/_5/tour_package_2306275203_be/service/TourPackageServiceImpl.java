@@ -2,6 +2,7 @@ package apap.ti._5.tour_package_2306275203_be.service;
 
 import apap.ti._5.tour_package_2306275203_be.dto.request.CreateTourPackageRequestDTO;
 import apap.ti._5.tour_package_2306275203_be.dto.request.UpdateTourPackageRequestDTO;
+import apap.ti._5.tour_package_2306275203_be.dto.response.PlanResponseDTO;
 import apap.ti._5.tour_package_2306275203_be.dto.response.TourPackageResponseDTO;
 import apap.ti._5.tour_package_2306275203_be.model.Activity;
 import apap.ti._5.tour_package_2306275203_be.model.OrderedQuantity;
@@ -13,6 +14,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
@@ -136,6 +138,13 @@ public class TourPackageServiceImpl implements TourPackageService {
 
 
     private TourPackageResponseDTO convertToResponseDTO(TourPackage tourPackage) {
+        List<PlanResponseDTO> planDTOs = new ArrayList<>();
+        if (tourPackage.getListPlan() != null) {
+            planDTOs = tourPackage.getListPlan().stream()
+                    .map(PlanServiceImpl::convertToResponseDTO)
+                    .collect(Collectors.toList());
+        }
+
         return TourPackageResponseDTO.builder()
                 .id(tourPackage.getId())
                 .userId(tourPackage.getUserId())
@@ -145,6 +154,7 @@ public class TourPackageServiceImpl implements TourPackageService {
                 .status(tourPackage.getStatus())
                 .startDate(tourPackage.getStartDate())
                 .endDate(tourPackage.getEndDate())
+                .listPlan(planDTOs)
                 .build();
     }
 }

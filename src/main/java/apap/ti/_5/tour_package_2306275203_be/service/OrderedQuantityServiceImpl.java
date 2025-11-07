@@ -79,22 +79,18 @@ private void validateActivityAddition(Plan plan, Activity activity, int newOrder
     if (!activity.getActivityType().equals(plan.getActivityType())) {
         throw new IllegalArgumentException("Activity type does not match plan's activity type.");
     }
-    
-    // --- VALIDASI BARU DI SINI ---
-    // Memastikan tanggal Activity berada di dalam rentang tanggal Plan
+
     if (activity.getStartDate().isBefore(plan.getStartDate())) {
         throw new IllegalArgumentException("Activity start date cannot be before the plan's start date.");
     }
     if (activity.getEndDate().isAfter(plan.getEndDate())) {
         throw new IllegalArgumentException("Activity end date cannot be after the plan's end date.");
     }
-    // --- AKHIR VALIDASI BARU ---
 
     if (newOrderedQuota > activity.getCapacity()) {
         throw new IllegalArgumentException("Ordered quantity exceeds activity capacity.");
     }
 
-    // Menghitung total kuota yang sudah ada di plan, TIDAK TERMASUK item yang sedang diedit (jika ada)
     int currentTotalQuotaInPlan = plan.getListOrderedQuantity().stream()
             .mapToInt(OrderedQuantity::getOrderedQuota)
             .sum();
