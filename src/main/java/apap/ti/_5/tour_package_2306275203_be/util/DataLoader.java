@@ -50,18 +50,16 @@ public class DataLoader implements CommandLineRunner {
         System.out.println("Database Activity kosong, mengisi dengan data dummy menggunakan Faker...");
 
             String[] locations = new String[]{
-                    "DKI Jakarta (Provinsi)",
-                    "Bali (Provinsi)",
-                    "Jawa Barat (Provinsi)",
-                    "Yogyakarta (Provinsi)",
-                    "Jawa Tengah (Provinsi)",
-                    "Sumatera Utara (Provinsi)",
-                    "Kalimantan Selatan (Provinsi)"
+                "DKI Jakarta (Provinsi)",
+                "Bali (Provinsi)",
+                "Jawa Barat (Provinsi)",
+                "Yogyakarta (Provinsi)",
+                "Kota Denpasar" 
             };
 
             String[] activityTypes = new String[]{"Flight", "Accommodation", "Vehicle Rental"};
 
-            int totalActivities = 30; // generate a wider range
+            int totalActivities = 30; 
             for (int i = 1; i <= totalActivities; i++) {
                 String type = activityTypes[rand.nextInt(activityTypes.length)];
                 Activity act = new Activity();
@@ -131,8 +129,23 @@ public class DataLoader implements CommandLineRunner {
                 for (String user : sampleUsers) {
                     int userPackageCount = 1 + rand.nextInt(3);
                     for (int p = 0; p < userPackageCount; p++) {
-                        long userCount = tourPackageDb.countByUserId(user);
-                        String packageId = String.format("PACK-%s-%03d", user, userCount + 1);
+                        List<String> latestIds = tourPackageDb.findLatestIdByUserId(user);
+                        int nextSequence = 1;
+
+                        if (!latestIds.isEmpty()) {
+                            String lastId = latestIds.get(0);
+                            try {
+                                String lastSequenceStr = lastId.substring(lastId.lastIndexOf('-') + 1);
+                                nextSequence = Integer.parseInt(lastSequenceStr) + 1;
+                            } catch (Exception e) {
+                                nextSequence = latestIds.size() + 1;
+                            }
+                        } else {
+                            nextSequence = p + 1; 
+                        }
+                        
+                        long currentCountForUserInLoop = tourPackageDb.countByUserIdAndIsDeletedFalse(user);
+                        String packageId = String.format("PACK-%s-%03d", user, currentCountForUserInLoop + 1);
 
                         LocalDateTime pkgStart = LocalDateTime.now().plusDays(1 + rand.nextInt(60)).withHour(0).withMinute(0);
                         LocalDateTime pkgEnd = pkgStart.plusDays(2 + rand.nextInt(12)).withHour(23).withMinute(59);
