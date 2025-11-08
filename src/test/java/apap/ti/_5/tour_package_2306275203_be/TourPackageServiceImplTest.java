@@ -72,23 +72,25 @@ class TourPackageServiceImplTest {
                 .build();
     }
 
-    @Test
-    void testCreateTourPackage_Success() {
-        when(tourPackageDb.countByUserId(anyString())).thenReturn(0L);
-        when(tourPackageDb.save(any(TourPackage.class))).thenReturn(tourPackage);
+@Test
+void testCreateTourPackage_Success() {
+    when(tourPackageDb.findLatestIdByUserId(anyString())).thenReturn(Collections.emptyList());
+    
+    when(tourPackageDb.save(any(TourPackage.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        TourPackageResponseDTO response = tourPackageService.createTourPackage(createDto);
+    TourPackageResponseDTO response = tourPackageService.createTourPackage(createDto);
 
-        assertNotNull(response);
-        assertEquals(packageId, response.getId());
-        assertEquals("Pending", response.getStatus());
-        verify(tourPackageDb, times(1)).countByUserId("USER1");
-        verify(tourPackageDb, times(1)).save(any(TourPackage.class));
-    }
+    assertNotNull(response);
+    assertEquals("PACK-USER1-001", response.getId());
+    assertEquals("Pending", response.getStatus());
+    
+    verify(tourPackageDb, times(1)).findLatestIdByUserId("USER1");
+    verify(tourPackageDb, times(1)).save(any(TourPackage.class));
+}
 
     @Test
     void testCreateTourPackage_InvalidDates() {
-        createDto.setEndDate(now); // End date before start date
+        createDto.setEndDate(now);
         assertThrows(IllegalArgumentException.class, () -> tourPackageService.createTourPackage(createDto));
         verify(tourPackageDb, never()).save(any(TourPackage.class));
     }
