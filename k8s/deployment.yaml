@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tour-package-be
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tour-package-be
+  template:
+    metadata:
+      labels:
+        app: tour-package-be
+    spec:
+      containers:
+        - name: springboot-container
+          image: malikaatha/tour-package-be:REPLACE_ME_TAG
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: tour-package-be-config
+                  key: DATABASE_URL_PROD
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: tour-package-be-config
+                  key: DATABASE_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: tour-package-be-secret
+                  key: DATABASE_PASSWORD
+            # Tambahkan ini jika kamu pakai JWT
+            - name: JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tour-package-be-secret
+                  key: JWT_SECRET_KEY
