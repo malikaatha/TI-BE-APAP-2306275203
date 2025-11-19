@@ -3,10 +3,11 @@ name: Deploy Tour Package BE
 on:
   push:
     branches:
-      - 'main'
+      - 'main' # Kamu sudah ganti ke 'main', ini sudah benar
 
 env:
-  DOCK-ER_IMAGE_NAME: malikaatha/tour-package-be
+  # INI PERBAIKANNYA! Typo DOCK-ER sudah dihapus
+  DOCKER_IMAGE_NAME: malikaatha/tour-package-be
 
 jobs:
   build:
@@ -57,7 +58,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: docker-push
     steps:
-      # INI PERBAIKANNYA! Kita download dulu semua file yang dibutuhkan.
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
@@ -79,7 +79,6 @@ jobs:
             
             mkdir -p ~/app/tour-package-be/k8s
             
-            # Sekarang 'scp' akan berhasil karena file-filenya sudah ada
             scp -o StrictHostKeyChecking=no -r k8s/deployment.yaml configmap.yaml secret.yaml k8s/service.yaml k8s/ingress.yaml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/app/tour-package-be/k8s/
             
             sudo k3s kubectl apply -f ~/app/tour-package-be/k8s/
