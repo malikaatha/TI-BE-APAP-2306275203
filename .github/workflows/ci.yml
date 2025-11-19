@@ -3,7 +3,7 @@ name: Deploy Tour Package BE
 on:
   push:
     branches:
-      - 'feat/praktikum-9' # PASTIKAN INI NAMA BRANCH DEPLOYMENT-MU
+      - 'main' # PASTIKAN INI NAMA BRANCH DEPLOYMENT-MU
 
 env:
   # Tulis nama image langsung di sini, tidak perlu dari secret
