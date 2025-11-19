@@ -64,15 +64,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: docker-push
     steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: app-build
-          path: .
-
+      # LANGSUNG REPLACE TAG, INI SALAH! HARUS DOWNLOAD DULU!
       - name: Replace image tag in deployment.yaml
         run: sed -i "s|REPLACE_ME_TAG|${{ github.sha }}|g" k8s/deployment.yaml
-
       - name: Deploy to EC2
         uses: appleboy/ssh-action@master
         with:
