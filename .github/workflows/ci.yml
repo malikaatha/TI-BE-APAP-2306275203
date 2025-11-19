@@ -3,7 +3,7 @@ name: Deploy Tour Package BE
 on:
   push:
     branches:
-      - 'feat/praktikum-9'
+      - 'main'
 
 env:
   DOCK-ER_IMAGE_NAME: malikaatha/tour-package-be
