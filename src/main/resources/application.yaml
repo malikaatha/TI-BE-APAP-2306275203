@@ -3,16 +3,19 @@ spring:
     import: optional:file:.env[.properties]
   application:
     name: tour-package-be
+  
   datasource:
-    url: ${DATABASE_URL_DEV}
-    username: ${DEV_USERNAME}
-    password: ${DEV_PASSWORD}
+    url: ${SPRING_DATASOURCE_URL:${DATABASE_URL_DEV}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DEV_USERNAME}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DEV_PASSWORD}}
+    driver-class-name: org.postgresql.Driver
+
   mvc:
     hiddenmethod:
       filter:
         enabled: true
-  profiles:
-    active: 'dev'
+  
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
