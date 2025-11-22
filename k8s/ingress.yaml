@@ -3,7 +3,7 @@ kind: Ingress
 metadata:
   name: tour-package-be-ingress
   annotations:
-    kubernetes.io/ingress.class: traefik
+    kubernetes.io/ingress.class: "traefik"
 spec:
   rules:
     - host: 2306275203-be.hafizmuh.site
@@ -13,6 +13,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: tour-package-be
+                name: tour-package-be-service
                 port:
-                  number: 80
+                  number: 8080
