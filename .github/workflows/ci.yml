@@ -53,7 +53,6 @@ jobs:
           push: true
           tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
 
-  # ===== JOB DEPLOY YANG SUDAH DIPERBAIKI TOTAL =====
   deploy:
     runs-on: ubuntu-latest
     needs: docker-push
@@ -64,33 +63,31 @@ jobs:
           name: app-build
           path: .
 
-      # Langkah 1: Siapkan semua file konfigurasi di runner
+      # Langkah 1: Siapkan file konfigurasi
       - name: Prepare configuration files
         run: |
-          # Ganti tag image di deployment.yaml
+          # Ganti tag image
           sed -i "s|REPLACE_ME_TAG|${{ github.sha }}|g" k8s/deployment.yaml
           
-          # Buat file ConfigMap
+          # Buat ConfigMap
           printf "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: tour-package-be-config\ndata:\n  DATABASE_URL_PROD: \"${{ secrets.DATABASE_URL_PROD }}\"\n  DATABASE_USERNAME: \"${{ secrets.DATABASE_USERNAME }}\"\n" > k8s/configmap.yaml
           
-          # Buat file Secret
+          # Buat Secret
           printf "apiVersion: v1\nkind: Secret\nmetadata:\n  name: tour-package-be-secret\ntype: Opaque\nstringData:\n  DATABASE_PASSWORD: \"${{ secrets.DATABASE_PASSWORD }}\"\n  JWT_SECRET_KEY: \"${{ secrets.JWT_SECRET_KEY }}\"\n" > k8s/secret.yaml
 
-      # Langkah 2: Salin semua file dari runner ke server EC2
       - name: Copy files to EC2 server
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          # Buat folder tujuan di server sebelum menyalin
-          script_before: mkdir -p ~/app/tour-package-be/k8s
-          # Salin semua file dari folder 'k8s' di runner
-          source: "k8s/*"
-          # Ke folder tujuan di server
-          target: "~/app/tour-package-be/k8s"
 
-      # Langkah 3: Jalankan perintah kubectl di server EC2
+          script_before: |
+            rm -rf ~/app/tour-package-be/k8s
+            mkdir -p ~/app/tour-package-be
+          source: "k8s"
+          target: "~/app/tour-package-be"
+
       - name: Apply Kubernetes configurations
         uses: appleboy/ssh-action@master
         with:
@@ -98,7 +95,13 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # Jalankan kubectl apply pada folder yang sudah berisi file
+            echo "=== Cek File di Server ==="
+            ls -la ~/app/tour-package-be/k8s/
+            
+            echo "=== Apply Konfigurasi ==="
             sudo k3s kubectl apply -f ~/app/tour-package-be/k8s/
-            # Cek status rollout deployment
+            
+            echo "=== Cek Status Deployment ==="
+            # Force restart biar image baru ketarik (opsional tapi bagus)
+            sudo k3s kubectl rollout restart deployment/tour-package-be
             sudo k3s kubectl rollout status deployment/tour-package-be
