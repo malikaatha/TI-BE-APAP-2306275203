@@ -9,6 +9,7 @@ import apap.ti._5.tour_package_2306275203_be.repository.OrderedQuantityDb;
 import apap.ti._5.tour_package_2306275203_be.repository.PlanDb;
 import apap.ti._5.tour_package_2306275203_be.repository.TourPackageDb;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import com.github.javafaker.Faker;
@@ -22,6 +23,7 @@ import java.util.Locale;
 import java.util.Random;
 
 @Component
+@Profile("!production")
 public class DataLoader implements CommandLineRunner {
 
     private final ActivityDb activityDb;
