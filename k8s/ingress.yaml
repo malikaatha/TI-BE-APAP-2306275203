@@ -13,6 +13,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: tour-package-be-service
+                name: tour-package-be
                 port:
                   number: 80
