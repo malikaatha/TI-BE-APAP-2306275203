@@ -1,5 +1,6 @@
 package apap.ti._5.tour_package_2306275203_be.service;
 
+import apap.ti._5.tour_package_2306275203_be.dto.request.CreateActivityRequestDTO;
 import apap.ti._5.tour_package_2306275203_be.dto.response.ActivityResponseDTO;
 import apap.ti._5.tour_package_2306275203_be.model.Activity;
 import apap.ti._5.tour_package_2306275203_be.model.Plan;
@@ -7,6 +8,8 @@ import apap.ti._5.tour_package_2306275203_be.repository.ActivityDb;
 import apap.ti._5.tour_package_2306275203_be.repository.PlanDb;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -62,5 +65,61 @@ public class ActivityServiceImpl implements ActivityService {
                 activity.getStartLocation(),
                 activity.getEndLocation()
         );
+    }
+
+    @Override
+    public ActivityResponseDTO createActivity(CreateActivityRequestDTO dto) {
+        if (dto.getActivityName() == null || dto.getActivityName().isEmpty()) throw new IllegalArgumentException("Activity Name is required");
+        if (dto.getActivityType() == null || dto.getActivityType().isEmpty()) throw new IllegalArgumentException("Activity Type is required");
+
+        if (dto.getPrice() <= 0) {
+            throw new IllegalArgumentException("Price must be greater than 0.");
+        }
+        if (dto.getCapacity() <= 0) {
+            throw new IllegalArgumentException("Capacity must be greater than 0.");
+        }
+
+        if (dto.getStartDate().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Start date cannot be in the past.");
+        }
+
+
+        if (!dto.getEndDate().isAfter(dto.getStartDate())) {
+            throw new IllegalArgumentException("End date must be after start date.");
+        }
+
+        String dateStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String prefix = "ACT-" + dateStr + "-";
+
+        var latestActivity = activityDb.findTopByIdStartingWithOrderByIdDesc(prefix);
+
+        int nextSequence = 1;
+        if (latestActivity.isPresent()) {
+            String lastId = latestActivity.get().getId();
+            try {
+                String lastSequenceStr = lastId.substring(lastId.length() - 3);
+                nextSequence = Integer.parseInt(lastSequenceStr) + 1;
+            } catch (Exception e) {
+                nextSequence = 1;
+            }
+        }
+
+        String newId = String.format("%s%03d", prefix, nextSequence);
+
+        Activity activity = new Activity();
+        activity.setId(newId);
+        activity.setActivityName(dto.getActivityName());
+        activity.setActivityItem(dto.getActivityItem());
+        activity.setCapacity(dto.getCapacity());
+        activity.setPrice(dto.getPrice());
+        activity.setActivityType(dto.getActivityType());
+        activity.setStartDate(dto.getStartDate());
+        activity.setEndDate(dto.getEndDate());
+        activity.setStartLocation(dto.getStartLocation());
+        activity.setEndLocation(dto.getEndLocation());
+
+        Activity savedActivity = activityDb.save(activity);
+
+        return convertToResponseDTO(savedActivity);
     }
 }

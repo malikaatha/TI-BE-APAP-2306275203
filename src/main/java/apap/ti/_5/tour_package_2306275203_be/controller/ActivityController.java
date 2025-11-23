@@ -1,5 +1,6 @@
 package apap.ti._5.tour_package_2306275203_be.controller;
 
+import apap.ti._5.tour_package_2306275203_be.dto.request.CreateActivityRequestDTO;
 import apap.ti._5.tour_package_2306275203_be.dto.response.ActivityResponseDTO;
 import apap.ti._5.tour_package_2306275203_be.service.ActivityService;
 import org.springframework.http.HttpStatus;
@@ -25,10 +26,8 @@ public class ActivityController {
         try {
             List<ActivityResponseDTO> activities;
             if (planId != null) {
-                // Jika ada planId, panggil fungsi filter
                 activities = activityService.getFilteredActivitiesForPlan(planId);
             } else {
-                // Jika tidak, tampilkan semua (untuk debugging/admin)
                 activities = activityService.getAllActivities();
             }
             return ResponseEntity.ok(activities);
@@ -36,4 +35,17 @@ public class ActivityController {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
     }
+
+    @PostMapping("/create")
+    public ResponseEntity<?> createActivity(@RequestBody CreateActivityRequestDTO dto) {
+        try {
+            ActivityResponseDTO response = activityService.createActivity(dto);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
+    
 }
