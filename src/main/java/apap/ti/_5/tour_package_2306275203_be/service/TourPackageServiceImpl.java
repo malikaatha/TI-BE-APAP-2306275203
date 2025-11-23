@@ -14,6 +14,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
@@ -71,6 +72,7 @@ public class TourPackageServiceImpl implements TourPackageService {
     @Override
     public List<TourPackageResponseDTO> getAllTourPackage() {
         return tourPackageDb.findAll().stream()
+                .sorted(Comparator.comparing(TourPackage::getStartDate)) 
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
     }
