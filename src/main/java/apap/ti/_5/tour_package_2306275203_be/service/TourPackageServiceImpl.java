@@ -144,39 +144,45 @@ public class TourPackageServiceImpl implements TourPackageService {
     }
 
     @Override
-    public TourPackageResponseDTO processPackage(String id) {
-        TourPackage tourPackage = tourPackageDb.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Package not found"));
+        public TourPackageResponseDTO processPackage(String id) {
+            TourPackage tourPackage = tourPackageDb.findById(id)
+                    .orElseThrow(() -> new NoSuchElementException("Package not found"));
 
-        if (!"Pending".equals(tourPackage.getStatus())) {
-            throw new IllegalStateException("Only 'Pending' packages can be processed.");
-        }
-
-        if (tourPackage.getListPlan() == null || tourPackage.getListPlan().isEmpty()) {
-            throw new IllegalStateException("Package cannot be processed without any plans.");
-        }
-        
-        for (Plan plan : tourPackage.getListPlan()) {
-            if (!"Fulfilled".equals(plan.getStatus())) {
-                throw new IllegalStateException("All plans must be 'Fulfilled' to process the package.");
+            if (!"Pending".equals(tourPackage.getStatus())) {
+                throw new IllegalStateException("Only 'Pending' packages can be processed.");
             }
-        }
 
-        for (Plan plan : tourPackage.getListPlan()) {
-            for (OrderedQuantity oq : plan.getListOrderedQuantity()) {
-                Activity activity = oq.getActivity();
-                if (activity.getCapacity() < oq.getOrderedQuota()) {
-                     throw new IllegalStateException("Not enough capacity for activity: " + activity.getActivityName());
+            if (tourPackage.getListPlan() == null || tourPackage.getListPlan().isEmpty()) {
+                throw new IllegalStateException("Package cannot be processed without any plans.");
+            }
+            
+            for (Plan plan : tourPackage.getListPlan()) {
+                if (!"Fulfilled".equals(plan.getStatus())) {
+                    throw new IllegalStateException("All plans must be 'Fulfilled' to process the package.");
                 }
-                activity.setCapacity(activity.getCapacity() - oq.getOrderedQuota());
-                activityDb.save(activity);
             }
+
+            for (Plan plan : tourPackage.getListPlan()) {
+                for (OrderedQuantity oq : plan.getListOrderedQuantity()) {
+                    Activity activity = oq.getActivity();
+                    if (activity.getCapacity() < oq.getOrderedQuota()) {
+                        throw new IllegalStateException("Not enough capacity for activity: " + activity.getActivityName());
+                    }
+                    activity.setCapacity(activity.getCapacity() - oq.getOrderedQuota());
+                    activityDb.save(activity);
+                }
+            }
+
+            // createBillForPackage(tourPackage);
+
+            tourPackage.setStatus("Waiting for Payment");
+            
+            tourPackageDb.save(tourPackage);
+            return convertToResponseDTO(tourPackage);
         }
 
-        tourPackage.setStatus("Processed");
-        tourPackageDb.save(tourPackage);
-        return convertToResponseDTO(tourPackage);
-    }
+        // private void createBillForPackage(TourPackage tourPackage) {
+        // }
 
 
     private TourPackageResponseDTO convertToResponseDTO(TourPackage tourPackage) {
@@ -198,5 +204,15 @@ public class TourPackageServiceImpl implements TourPackageService {
                 .endDate(tourPackage.getEndDate())
                 .listPlan(planDTOs)
                 .build();
+    }
+
+    @Override
+    public List<PlanResponseDTO> getAllPlansByPackageId(String packageId) {
+        TourPackage tourPackage = tourPackageDb.findById(packageId)
+                .orElseThrow(() -> new NoSuchElementException("Package not found"));
+
+        return tourPackage.getListPlan().stream()
+                .map(PlanServiceImpl::convertToResponseDTO)
+                .collect(Collectors.toList());
     }
 }
