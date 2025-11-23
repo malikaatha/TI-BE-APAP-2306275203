@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,5 +20,8 @@ public interface OrderedQuantityDb extends JpaRepository<OrderedQuantity, UUID> 
     List<OrderedQuantity> findByYear(int year);
 
     List<OrderedQuantity> findByPlan(Plan plan);
+
+    List<OrderedQuantity> findByStartDateBetween(LocalDateTime start, LocalDateTime end);
+
 
 }
