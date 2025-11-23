@@ -29,16 +29,19 @@ public class OrderedQuantityServiceImpl implements OrderedQuantityService {
 
     @Override
     public void addActivityToPlan(UUID planId, CreateOrderedQuantityRequestDTO dto) {
-        Plan plan = planDb.findById(planId).orElseThrow(() -> new NoSuchElementException("Plan not found"));
-    Activity activity = activityDb.findById(dto.getActivityId()).orElseThrow(() -> new NoSuchElementException("Activity not found"));
+        Plan plan = planDb.findById(planId)
+                .orElseThrow(() -> new NoSuchElementException("Plan not found"));
+        
+        Activity activity = activityDb.findById(dto.getActivityId())
+                .orElseThrow(() -> new NoSuchElementException("Activity not found"));
 
-        validateActivityAddition(plan, activity, dto.getOrderedQuota());
+        validateActivityRequirements(activity);
+        validateActivityAddition(plan, activity, dto.getOrderedQuota(), null);
 
         OrderedQuantity oq = new OrderedQuantity();
         oq.setPlan(plan);
         oq.setActivity(activity);
         oq.setOrderedQuota(dto.getOrderedQuota());
-
         oq.setPrice(activity.getPrice());
         oq.setQuota(activity.getCapacity());
         oq.setStartDate(activity.getStartDate());
@@ -50,88 +53,106 @@ public class OrderedQuantityServiceImpl implements OrderedQuantityService {
     
     @Override
     public void updateOrderedQuantity(UUID orderedQuantityId, UpdateOrderedQuantityRequestDTO dto) {
-        OrderedQuantity oq = orderedQuantityDb.findById(orderedQuantityId).orElseThrow(() -> new NoSuchElementException("Ordered item not found"));
+        OrderedQuantity oq = orderedQuantityDb.findById(orderedQuantityId)
+                .orElseThrow(() -> new NoSuchElementException("Ordered item not found"));
+        
         Plan plan = oq.getPlan();
+        Activity activity = oq.getActivity();
 
-        validateActivityAddition(plan, oq.getActivity(), dto.getOrderedQuota());
+        validateActivityAddition(plan, activity, dto.getOrderedQuota(), orderedQuantityId);
 
         oq.setOrderedQuota(dto.getOrderedQuota());
         orderedQuantityDb.save(oq);
         recalculatePlanAndUpdateStatus(plan);
     }
     
-@Override
-public void removeActivityFromPlan(UUID orderedQuantityId) {
-    OrderedQuantity oq = orderedQuantityDb.findById(orderedQuantityId)
-            .orElseThrow(() -> new NoSuchElementException("Ordered item not found"));
-    Plan plan = oq.getPlan();
+    @Override
+    public void removeActivityFromPlan(UUID orderedQuantityId) {
+        OrderedQuantity oq = orderedQuantityDb.findById(orderedQuantityId)
+                .orElseThrow(() -> new NoSuchElementException("Ordered item not found"));
+        
+        Plan plan = oq.getPlan();
 
-    if (!"Pending".equals(plan.getTourPackage().getStatus())) {
-         throw new IllegalStateException("Cannot modify a processed package.");
+        if (!"Pending".equals(plan.getTourPackage().getStatus())) {
+             throw new IllegalStateException("Cannot modify a processed package.");
+        }
+
+        orderedQuantityDb.delete(oq);
+        orderedQuantityDb.flush(); 
+
+        recalculatePlanAndUpdateStatus(plan);
     }
 
-    plan.getListOrderedQuantity().remove(oq);
-
-    orderedQuantityDb.delete(oq);
-
-    recalculatePlanAndUpdateStatus(plan);
-}
-
-private void validateActivityAddition(Plan plan, Activity activity, int newOrderedQuota) {
-    TourPackage tourPackage = plan.getTourPackage();
-    if (!"Pending".equals(tourPackage.getStatus())) {
-        throw new IllegalStateException("Cannot modify a processed package.");
-    }
-    if (!activity.getActivityType().equals(plan.getActivityType())) {
-        throw new IllegalArgumentException("Activity type does not match plan's activity type.");
+    private void validateActivityRequirements(Activity activity) {
+        if (activity.getPrice() <= 0) {
+            throw new IllegalArgumentException("Activity price must be greater than 0.");
+        }
+        if (activity.getCapacity() <= 0) {
+            throw new IllegalArgumentException("Activity capacity must be greater than 0.");
+        }
     }
 
-    if (activity.getStartDate().isBefore(plan.getStartDate())) {
-        throw new IllegalArgumentException("Activity start date cannot be before the plan's start date.");
-    }
-    if (activity.getEndDate().isAfter(plan.getEndDate())) {
-        throw new IllegalArgumentException("Activity end date cannot be after the plan's end date.");
-    }
+    private void validateActivityAddition(Plan plan, Activity activity, int newOrderedQuota, UUID excludeOqId) {
+        TourPackage tourPackage = plan.getTourPackage();
+        
+        if (!"Pending".equals(tourPackage.getStatus())) {
+            throw new IllegalStateException("Cannot modify a processed package.");
+        }
+        
+        if (!activity.getActivityType().equals(plan.getActivityType())) {
+            throw new IllegalArgumentException("Activity type does not match plan's activity type.");
+        }
 
-    if (newOrderedQuota > activity.getCapacity()) {
-        throw new IllegalArgumentException("Ordered quantity exceeds activity capacity.");
-    }
+        if (activity.getStartDate().isBefore(plan.getStartDate())) {
+            throw new IllegalArgumentException("Activity start date cannot be before the plan's start date.");
+        }
+        if (activity.getEndDate().isAfter(plan.getEndDate())) {
+            throw new IllegalArgumentException("Activity end date cannot be after the plan's end date.");
+        }
 
-    int currentTotalQuotaInPlan = plan.getListOrderedQuantity().stream()
-            .mapToInt(OrderedQuantity::getOrderedQuota)
-            .sum();
+        if (newOrderedQuota <= 0) {
+            throw new IllegalArgumentException("Ordered quota must be greater than 0.");
+        }
 
-    if ((currentTotalQuotaInPlan + newOrderedQuota) > tourPackage.getQuota()) {
-        throw new IllegalArgumentException("Total ordered quantity in plan exceeds package quota.");
-    }
-}
+        if (newOrderedQuota > activity.getCapacity()) {
+            throw new IllegalArgumentException("Ordered quantity exceeds activity capacity.");
+        }
 
-private void recalculatePlanAndUpdateStatus(Plan plan) {
-    Plan freshPlan = planDb.findById(plan.getId()).orElseThrow();
-    TourPackage tourPackage = freshPlan.getTourPackage();
-    
-    List<OrderedQuantity> orderedQuantitiesForPlan = orderedQuantityDb.findByPlan(freshPlan);
+        int currentTotalQuotaInPlan = plan.getListOrderedQuantity().stream()
+                .filter(oq -> !oq.getId().equals(excludeOqId)) 
+                .mapToInt(OrderedQuantity::getOrderedQuota)
+                .sum();
 
-    long newPlanPrice = orderedQuantitiesForPlan.stream()
-            .mapToLong(o -> o.getPrice() * o.getOrderedQuota())
-            .sum();
-    freshPlan.setPrice(newPlanPrice);
-
-
-    int totalOrderedInPlan = orderedQuantitiesForPlan.stream()
-            .mapToInt(OrderedQuantity::getOrderedQuota)
-            .sum();
-
-    if (totalOrderedInPlan == tourPackage.getQuota()) {
-        freshPlan.setStatus("Fulfilled");
-    } else {
-        freshPlan.setStatus("Unfulfilled");
+        if ((currentTotalQuotaInPlan + newOrderedQuota) > tourPackage.getQuota()) {
+            throw new IllegalArgumentException("Total ordered quantity in plan exceeds package quota.");
+        }
     }
 
-    planDb.save(freshPlan);
+    private void recalculatePlanAndUpdateStatus(Plan plan) {
+        Plan freshPlan = planDb.findById(plan.getId()).orElseThrow();
+        TourPackage tourPackage = freshPlan.getTourPackage();
+        
+        List<OrderedQuantity> orderedQuantitiesForPlan = orderedQuantityDb.findByPlan(freshPlan);
 
-    recalculatePackagePrice(tourPackage);
-}
+        long newPlanPrice = orderedQuantitiesForPlan.stream()
+                .mapToLong(o -> o.getPrice() * o.getOrderedQuota())
+                .sum();
+        freshPlan.setPrice(newPlanPrice);
+
+        int totalOrderedInPlan = orderedQuantitiesForPlan.stream()
+                .mapToInt(OrderedQuantity::getOrderedQuota)
+                .sum();
+
+        if (totalOrderedInPlan == tourPackage.getQuota()) {
+            freshPlan.setStatus("Fulfilled");
+        } else {
+            freshPlan.setStatus("Unfulfilled");
+        }
+
+        planDb.save(freshPlan);
+
+        recalculatePackagePrice(tourPackage);
+    }
 
     private void recalculatePackagePrice(TourPackage tourPackage) {
         long newPackagePrice = tourPackage.getListPlan().stream()

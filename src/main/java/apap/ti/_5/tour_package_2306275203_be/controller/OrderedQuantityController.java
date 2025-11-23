@@ -20,7 +20,6 @@ public class OrderedQuantityController {
         this.orderedQuantityService = orderedQuantityService;
     }
 
-    // Fitur 11: Add Ordered Activities to Plan
     @PostMapping("/create/plan/{planId}")
     public ResponseEntity<String> addActivityToPlan(@PathVariable("planId") UUID planId, @RequestBody CreateOrderedQuantityRequestDTO dto) {
         try {
@@ -33,7 +32,6 @@ public class OrderedQuantityController {
         }
     }
 
-    // Fitur 12: Edit Ordered Quantity
     @PutMapping("/{id}/edit")
     public ResponseEntity<String> updateOrderedQuantity(@PathVariable("id") UUID id, @RequestBody UpdateOrderedQuantityRequestDTO dto) {
         try {
@@ -46,7 +44,6 @@ public class OrderedQuantityController {
         }
     }
     
-    // Fitur 13: Delete Ordered Quantity
     @DeleteMapping("/{id}/delete")
     public ResponseEntity<String> removeActivityFromPlan(@PathVariable("id") UUID id) {
         try {
