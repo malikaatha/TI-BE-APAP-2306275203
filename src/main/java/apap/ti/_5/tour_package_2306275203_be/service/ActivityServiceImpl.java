@@ -1,8 +1,10 @@
 package apap.ti._5.tour_package_2306275203_be.service;
 
 import apap.ti._5.tour_package_2306275203_be.dto.request.CreateActivityRequestDTO;
+import apap.ti._5.tour_package_2306275203_be.dto.request.UpdateActivityRequestDTO;
 import apap.ti._5.tour_package_2306275203_be.dto.response.ActivityResponseDTO;
 import apap.ti._5.tour_package_2306275203_be.model.Activity;
+import apap.ti._5.tour_package_2306275203_be.model.OrderedQuantity;
 import apap.ti._5.tour_package_2306275203_be.model.Plan;
 import apap.ti._5.tour_package_2306275203_be.repository.ActivityDb;
 import apap.ti._5.tour_package_2306275203_be.repository.PlanDb;
@@ -122,4 +124,50 @@ public class ActivityServiceImpl implements ActivityService {
 
         return convertToResponseDTO(savedActivity);
     }
+
+        @Override
+        public ActivityResponseDTO updateActivity(String id, UpdateActivityRequestDTO dto) {
+                Activity activity = activityDb.findById(id)
+                        .orElseThrow(() -> new NoSuchElementException("Activity not found"));
+
+                if (activity.getListOrderedQuantity() != null) {
+                for (OrderedQuantity oq : activity.getListOrderedQuantity()) {
+                        Plan plan = oq.getPlan();
+                        if (plan != null && "Fulfilled".equalsIgnoreCase(plan.getStatus())) {
+                        throw new IllegalStateException("Cannot update activity that belongs to a fulfilled plan.");
+                        }
+                }
+                }
+
+                if (dto.getPrice() <= 0) {
+                throw new IllegalArgumentException("Price must be greater than 0.");
+                }
+                if (dto.getCapacity() <= 0) {
+                throw new IllegalArgumentException("Capacity must be greater than 0.");
+                }
+                
+                // StartDate >= Now
+                if (dto.getStartDate().isBefore(LocalDateTime.now())) {
+                throw new IllegalArgumentException("Start date cannot be in the past.");
+                }
+
+                // StartDate < EndDate
+                if (!dto.getEndDate().isAfter(dto.getStartDate())) {
+                throw new IllegalArgumentException("End date must be after start date.");
+                }
+
+                // Update Field (Backlog 2 & 3)
+                activity.setActivityName(dto.getActivityName());
+                activity.setActivityItem(dto.getActivityItem());
+                activity.setPrice(dto.getPrice());
+                activity.setCapacity(dto.getCapacity());
+                activity.setStartDate(dto.getStartDate());
+                activity.setEndDate(dto.getEndDate());
+                activity.setStartLocation(dto.getStartLocation());
+                activity.setEndLocation(dto.getEndLocation());
+
+                Activity savedActivity = activityDb.save(activity);
+                
+                return convertToResponseDTO(savedActivity);
+        }
 }

@@ -1,6 +1,7 @@
 package apap.ti._5.tour_package_2306275203_be.controller;
 
 import apap.ti._5.tour_package_2306275203_be.dto.request.CreateActivityRequestDTO;
+import apap.ti._5.tour_package_2306275203_be.dto.request.UpdateActivityRequestDTO;
 import apap.ti._5.tour_package_2306275203_be.dto.response.ActivityResponseDTO;
 import apap.ti._5.tour_package_2306275203_be.service.ActivityService;
 import org.springframework.http.HttpStatus;
@@ -42,6 +43,20 @@ public class ActivityController {
             ActivityResponseDTO response = activityService.createActivity(dto);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}/update")
+    public ResponseEntity<?> updateActivity(@PathVariable String id, @RequestBody UpdateActivityRequestDTO dto) {
+        try {
+            ActivityResponseDTO response = activityService.updateActivity(id, dto);
+            return ResponseEntity.ok(response);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
+        } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(e.getMessage());
