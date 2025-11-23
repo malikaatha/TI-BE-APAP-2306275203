@@ -93,7 +93,7 @@ public class ActivityServiceImpl implements ActivityService {
         String dateStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String prefix = "ACT-" + dateStr + "-";
 
-        var latestActivity = activityDb.findTopByIdStartingWithOrderByIdDesc(prefix);
+        var latestActivity = activityDb.findLatestIdIncludingDeleted(prefix);
 
         int nextSequence = 1;
         if (latestActivity.isPresent()) {
