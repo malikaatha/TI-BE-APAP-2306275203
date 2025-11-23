@@ -43,7 +43,7 @@ public class DataLoader implements CommandLineRunner {
     Faker faker = new Faker(Locale.forLanguageTag("id-ID"));
         Random rand = new Random();
 
-        System.out.println("Clearing existing Activity/Package/Plan/OrderedQuantity data and reseeding with Faker...");
+        System.out.println("Clearing existing Activity/Package/Plan/OrderedQuantity data and reseeding with Faker... ");
         orderedQuantityDb.deleteAll();
         planDb.deleteAll();
         tourPackageDb.deleteAll();
