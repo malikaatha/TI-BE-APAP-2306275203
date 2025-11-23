@@ -13,6 +13,8 @@ import apap.ti._5.tour_package_2306275203_be.repository.TourPackageDb;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -31,25 +33,51 @@ public class TourPackageServiceImpl implements TourPackageService {
         this.activityDb = activityDb;
     }
 
-    @Override
-    public TourPackageResponseDTO createTourPackage(CreateTourPackageRequestDTO dto) {
-        if (dto.getEndDate().isBefore(dto.getStartDate())) {
-            throw new IllegalArgumentException("End date cannot be before start date.");
-        }
-
-        List<String> latestIds = tourPackageDb.findLatestIdByUserId(dto.getUserId());
-        int nextSequence = 1;
-
-        if (!latestIds.isEmpty()) {
-            String lastId = latestIds.get(0); 
-            
-            try {
-                String lastSequenceStr = lastId.substring(lastId.lastIndexOf('-') + 1);
-                nextSequence = Integer.parseInt(lastSequenceStr) + 1;
-            } catch (NumberFormatException | IndexOutOfBoundsException e) {
-                System.err.println("Could not parse sequence from ID: " + lastId + ". Defaulting to next available count.");
-                nextSequence = latestIds.size() + 1;
+        @Override
+        public TourPackageResponseDTO createTourPackage(CreateTourPackageRequestDTO dto) {
+            if (dto.getStartDate().isBefore(LocalDateTime.now())) {
+                throw new IllegalArgumentException("Start date cannot be in the past.");
             }
+
+            if (dto.getEndDate().isBefore(dto.getStartDate())) {
+                throw new IllegalArgumentException("End date cannot be before start date.");
+            }
+
+            if (dto.getQuota() <= 0) {
+                throw new IllegalArgumentException("Quota must be greater than 0.");
+            }
+
+            String dateStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+            String prefix = "PKG-" + dateStr + "-";
+
+            var latestPackage = tourPackageDb.findTopByIdStartingWithOrderByIdDesc(prefix);
+
+            int nextSequence = 1;
+            if (latestPackage.isPresent()) {
+                String lastId = latestPackage.get().getId();
+                try {
+                    String lastSequenceStr = lastId.substring(lastId.length() - 3);
+                    nextSequence = Integer.parseInt(lastSequenceStr) + 1;
+                } catch (NumberFormatException | IndexOutOfBoundsException e) {
+                    nextSequence = 1;
+                }
+            }
+
+            String packageId = String.format("%s%03d", prefix, nextSequence);
+
+            TourPackage tourPackage = TourPackage.builder()
+                    .id(packageId)
+                    .userId(dto.getUserId())
+                    .packageName(dto.getPackageName())
+                    .quota(dto.getQuota())
+                    .price(0L) 
+                    .status("Pending")
+                    .startDate(dto.getStartDate())
+                    .endDate(dto.getEndDate())
+                    .build();
+            
+            TourPackage savedPackage = tourPackageDb.save(tourPackage);
+            return convertToResponseDTO(savedPackage);
         }
 
         String packageId = String.format("PACK-%s-%03d", dto.getUserId(), nextSequence);

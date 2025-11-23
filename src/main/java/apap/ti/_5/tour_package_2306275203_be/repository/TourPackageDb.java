@@ -3,6 +3,7 @@ package apap.ti._5.tour_package_2306275203_be.repository;
 import apap.ti._5.tour_package_2306275203_be.model.TourPackage;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,4 +17,6 @@ public interface TourPackageDb extends JpaRepository<TourPackage, String> {
 
         @Query("SELECT p.id FROM TourPackage p WHERE p.userId = :userId ORDER BY p.id DESC")
         List<String> findLatestIdByUserId(@Param("userId") String userId);
+
+        Optional<TourPackage> findTopByIdStartingWithOrderByIdDesc(String prefix);
 }
