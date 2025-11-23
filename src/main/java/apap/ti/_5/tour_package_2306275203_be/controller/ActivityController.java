@@ -4,10 +4,13 @@ import apap.ti._5.tour_package_2306275203_be.dto.request.CreateActivityRequestDT
 import apap.ti._5.tour_package_2306275203_be.dto.request.UpdateActivityRequestDTO;
 import apap.ti._5.tour_package_2306275203_be.dto.response.ActivityResponseDTO;
 import apap.ti._5.tour_package_2306275203_be.service.ActivityService;
+
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -22,18 +25,29 @@ public class ActivityController {
         this.activityService = activityService;
     }
 
-    @GetMapping("")
-    public ResponseEntity<?> getActivities(@RequestParam(value = "planId", required = false) UUID planId) {
+    @GetMapping
+    public ResponseEntity<?> getAllActivities(
+            @RequestParam(required = false, defaultValue = "false") boolean includeDeleted,
+            @RequestParam(required = false) String activityType,
+            @RequestParam(required = false) String startLocation,
+            @RequestParam(required = false) String endLocation,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(required = false) String search
+    ) {
+        var response = activityService.getAllActivities(
+                includeDeleted, activityType, startLocation, endLocation, startDate, endDate, search
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getActivityById(@PathVariable String id) {
         try {
-            List<ActivityResponseDTO> activities;
-            if (planId != null) {
-                activities = activityService.getFilteredActivitiesForPlan(planId);
-            } else {
-                activities = activityService.getAllActivities();
-            }
-            return ResponseEntity.ok(activities);
+            ActivityResponseDTO response = activityService.getActivityById(id);
+            return ResponseEntity.ok(response);
         } catch (NoSuchElementException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+            return ResponseEntity.status(404).body(e.getMessage());
         }
     }
 

@@ -28,12 +28,24 @@ public class ActivityServiceImpl implements ActivityService {
                 this.planDb = planDb;
         }
 
-    @Override
-    public List<ActivityResponseDTO> getAllActivities() {
-        return activityDb.findAll().stream()
-                .map(this::convertToResponseDTO)
-                .collect(Collectors.toList());
-    }
+        @Override
+        public List<ActivityResponseDTO> getAllActivities(
+                boolean includeDeleted,
+                String activityType,
+                String startLocation,
+                String endLocation,
+                LocalDateTime startDate,
+                LocalDateTime endDate,
+                String search
+        ) {
+                List<Activity> activities = activityDb.findAllActivitiesWithFilters(
+                        includeDeleted, activityType, startLocation, endLocation, startDate, endDate, search
+                );
+
+                return activities.stream()
+                        .map(this::convertToResponseDTO)
+                        .collect(Collectors.toList());
+        }
 
     @Override
     public List<ActivityResponseDTO> getFilteredActivitiesForPlan(UUID planId) {
@@ -188,4 +200,12 @@ public class ActivityServiceImpl implements ActivityService {
 
         activityDb.delete(activity);
     }
+
+        @Override
+         public ActivityResponseDTO getActivityById(String id) {
+                Activity activity = activityDb.findById(id)
+                        .orElseThrow(() -> new NoSuchElementException("Activity not found"));
+                
+                return convertToResponseDTO(activity);
+        }
 }
