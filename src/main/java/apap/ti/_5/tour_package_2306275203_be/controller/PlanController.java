@@ -20,7 +20,6 @@ public class PlanController {
         this.planService = planService;
     }
 
-    // Fitur 8: Create Plan
     @PostMapping("/packages/{packageId}/plans/create")
     public ResponseEntity<?> createPlan(@PathVariable("packageId") String packageId, @RequestBody CreatePlanRequestDTO dto) {
         try {
@@ -33,7 +32,6 @@ public class PlanController {
         }
     }
 
-    // Fitur 9: View Plan
     @GetMapping("/plans/{id}")
     public ResponseEntity<?> getPlanById(@PathVariable("id") UUID id) {
         try {
@@ -44,7 +42,6 @@ public class PlanController {
         }
     }
 
-    // Fitur 10: Edit Plan (Update)
     @PutMapping("/plans/{id}/edit")
     public ResponseEntity<?> updatePlan(@PathVariable("id") UUID id, @RequestBody UpdatePlanRequestDTO dto) {
         try {
@@ -52,12 +49,11 @@ public class PlanController {
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>("Plan not found", HttpStatus.NOT_FOUND);
-        } catch (IllegalStateException e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
-    // Fitur 14: Delete Plan (Soft)
     @DeleteMapping("/plans/{id}/delete")
     public ResponseEntity<String> deletePlan(@PathVariable("id") UUID id) {
         try {

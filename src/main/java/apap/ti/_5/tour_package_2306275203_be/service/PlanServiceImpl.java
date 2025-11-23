@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 @Transactional
 public class PlanServiceImpl implements PlanService {
     private final PlanDb planDb;
-
     private final TourPackageDb tourPackageDb;
 
     public PlanServiceImpl(PlanDb planDb, TourPackageDb tourPackageDb) {
@@ -38,6 +37,12 @@ public class PlanServiceImpl implements PlanService {
             throw new IllegalStateException("Plans can only be added to 'Pending' packages.");
         }
 
+        if (dto.getPlanName() == null || dto.getPlanName().isEmpty()) throw new IllegalArgumentException("Plan Name is required");
+        if (dto.getActivityType() == null || dto.getActivityType().isEmpty()) throw new IllegalArgumentException("Activity Type is required");
+        if (dto.getStartLocation() == null || dto.getStartLocation().isEmpty()) throw new IllegalArgumentException("Start Location is required");
+        if (dto.getEndLocation() == null || dto.getEndLocation().isEmpty()) throw new IllegalArgumentException("End Location is required");
+        if (dto.getStartDate() == null || dto.getEndDate() == null) throw new IllegalArgumentException("Start Date and End Date are required");
+
         if (dto.getStartDate().isBefore(tourPackage.getStartDate())) {
             throw new IllegalArgumentException("Plan start date cannot be before package start date.");
         }
@@ -46,9 +51,6 @@ public class PlanServiceImpl implements PlanService {
         }
         if (dto.getEndDate().isBefore(dto.getStartDate())) {
             throw new IllegalArgumentException("Plan end date cannot be before its start date.");
-        }
-        if (dto.getEndDate().isAfter(tourPackage.getEndDate())) {
-            throw new IllegalArgumentException("Plan end date cannot be after package end date.");
         }
         if ("Accommodation".equals(dto.getActivityType()) && !dto.getStartLocation().equals(dto.getEndLocation())) {
             throw new IllegalArgumentException("For Accommodation, start and end locations must be the same.");
@@ -80,12 +82,31 @@ public class PlanServiceImpl implements PlanService {
     public PlanResponseDTO updatePlan(UUID id, UpdatePlanRequestDTO dto) {
         Plan plan = planDb.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Plan not found"));
+        TourPackage tourPackage = plan.getTourPackage();
 
-        if (!"Pending".equals(plan.getTourPackage().getStatus())) {
+        if (!"Pending".equals(tourPackage.getStatus())) {
             throw new IllegalStateException("Can only edit plans of 'Pending' packages.");
         }
         if (plan.getListOrderedQuantity() != null && !plan.getListOrderedQuantity().isEmpty()) {
             throw new IllegalStateException("Cannot edit a plan that already has ordered activities.");
+        }
+
+        if (dto.getPlanName() == null || dto.getPlanName().isEmpty()) throw new IllegalArgumentException("Plan Name is required");
+        if (dto.getStartLocation() == null || dto.getStartLocation().isEmpty()) throw new IllegalArgumentException("Start Location is required");
+        if (dto.getEndLocation() == null || dto.getEndLocation().isEmpty()) throw new IllegalArgumentException("End Location is required");
+        if (dto.getStartDate() == null || dto.getEndDate() == null) throw new IllegalArgumentException("Start Date and End Date are required");
+
+        if (dto.getStartDate().isBefore(tourPackage.getStartDate())) {
+            throw new IllegalArgumentException("Plan start date cannot be before package start date.");
+        }
+        if (dto.getEndDate().isAfter(tourPackage.getEndDate())) {
+            throw new IllegalArgumentException("Plan end date cannot be after package end date.");
+        }
+        if (dto.getEndDate().isBefore(dto.getStartDate())) {
+            throw new IllegalArgumentException("Plan end date cannot be before its start date.");
+        }
+        if ("Accommodation".equals(plan.getActivityType()) && !dto.getStartLocation().equals(dto.getEndLocation())) {
+            throw new IllegalArgumentException("For Accommodation, start and end locations must be the same.");
         }
 
         plan.setPlanName(dto.getPlanName());
@@ -110,21 +131,21 @@ public class PlanServiceImpl implements PlanService {
         planDb.delete(plan);
     }
     
-public static PlanResponseDTO convertToResponseDTO(Plan plan) {
-    List<OrderedQuantityResponseDTO> orderedQuantities = new ArrayList<>();
-    if (plan.getListOrderedQuantity() != null) {
-        orderedQuantities = plan.getListOrderedQuantity().stream().map(oq -> 
-            new OrderedQuantityResponseDTO(
-                oq.getId(),
-                oq.getOrderedQuota(),
-                oq.getPrice(),
-                oq.getActivity().getActivityName(),
-                oq.getActivity().getId(),
-                oq.getActivity().getCapacity(),
-                oq.getStartDate(), 
-                oq.getEndDate()
-            )).collect(Collectors.toList());
-    }
+    public static PlanResponseDTO convertToResponseDTO(Plan plan) {
+        List<OrderedQuantityResponseDTO> orderedQuantities = new ArrayList<>();
+        if (plan.getListOrderedQuantity() != null) {
+            orderedQuantities = plan.getListOrderedQuantity().stream().map(oq -> 
+                new OrderedQuantityResponseDTO(
+                    oq.getId(),
+                    oq.getOrderedQuota(),
+                    oq.getPrice(),
+                    oq.getActivity().getActivityName(),
+                    oq.getActivity().getId(),
+                    oq.getActivity().getCapacity(),
+                    oq.getStartDate(), 
+                    oq.getEndDate()
+                )).collect(Collectors.toList());
+        }
 
         return new PlanResponseDTO(
             plan.getId(),
