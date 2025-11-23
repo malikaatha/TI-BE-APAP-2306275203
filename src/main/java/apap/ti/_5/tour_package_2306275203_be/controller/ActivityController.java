@@ -62,5 +62,19 @@ public class ActivityController {
             return ResponseEntity.internalServerError().body(e.getMessage());
         }
     }
+
+    @DeleteMapping("/{id}/delete")
+    public ResponseEntity<?> deleteActivity(@PathVariable String id) {
+        try {
+            activityService.deleteActivity(id);
+            return ResponseEntity.ok("Activity has been deleted successfully.");
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
     
 }

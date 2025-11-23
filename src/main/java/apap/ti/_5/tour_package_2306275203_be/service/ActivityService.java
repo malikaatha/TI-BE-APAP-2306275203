@@ -11,4 +11,5 @@ public interface ActivityService {
     List<ActivityResponseDTO> getFilteredActivitiesForPlan(UUID planId);
     ActivityResponseDTO createActivity(CreateActivityRequestDTO dto);
     ActivityResponseDTO updateActivity(String id, UpdateActivityRequestDTO dto);
+    void deleteActivity(String id);
 }

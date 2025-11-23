@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.SQLDelete; // Tambah ini
+import org.hibernate.annotations.Where;     // Tambah ini
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -15,6 +17,8 @@ import java.util.List;
 @AllArgsConstructor
 @Entity
 @Table(name = "activity")
+@SQLDelete(sql = "UPDATE activity SET is_deleted = true WHERE id=?")
+@Where(clause = "is_deleted=false")
 public class Activity {
 
     @Id
@@ -49,4 +53,7 @@ public class Activity {
 
     @OneToMany(mappedBy = "activity", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<OrderedQuantity> listOrderedQuantity;
+
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false;
 }

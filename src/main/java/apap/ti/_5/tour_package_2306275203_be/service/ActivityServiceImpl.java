@@ -170,4 +170,22 @@ public class ActivityServiceImpl implements ActivityService {
                 
                 return convertToResponseDTO(savedActivity);
         }
+
+@Override
+    public void deleteActivity(String id) {
+        Activity activity = activityDb.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Activity not found"));
+
+        if (activity.getListOrderedQuantity() != null && !activity.getListOrderedQuantity().isEmpty()) {
+            for (OrderedQuantity oq : activity.getListOrderedQuantity()) {
+                Plan plan = oq.getPlan();
+                
+                if (plan != null && !"Fulfilled".equalsIgnoreCase(plan.getStatus())) {
+                    throw new IllegalStateException("Cannot delete activity that is linked to Unfulfilled plans.");
+                }
+            }
+        }
+
+        activityDb.delete(activity);
+    }
 }
