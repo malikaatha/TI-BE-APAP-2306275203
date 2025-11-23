@@ -1,16 +1,8 @@
 package apap.ti._5.tour_package_2306275203_be.controller;
 
-import apap.ti._5.tour_package_2306275203_be.dto.response.RevenueStatisticsResponseDTO;
 import apap.ti._5.tour_package_2306275203_be.service.StatisticsService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/statistics")
@@ -23,7 +15,7 @@ public class StatisticsController {
         this.statisticsService = statisticsService;
     }
 
-    @GetMapping("/revenue")
+    @GetMapping
     public ResponseEntity<?> getRevenue(
             @RequestParam Integer year,
             @RequestParam(required = false) Integer month

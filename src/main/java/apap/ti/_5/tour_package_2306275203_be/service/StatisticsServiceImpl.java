@@ -5,6 +5,7 @@ import apap.ti._5.tour_package_2306275203_be.model.OrderedQuantity;
 import apap.ti._5.tour_package_2306275203_be.model.Plan;
 import apap.ti._5.tour_package_2306275203_be.repository.OrderedQuantityDb;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -14,6 +15,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class StatisticsServiceImpl implements StatisticsService {
     private final OrderedQuantityDb orderedQuantityDb;
 
