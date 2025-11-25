@@ -134,26 +134,33 @@ public class LoyaltyServiceImpl implements LoyaltyService {
 
     @Override
     public int useCoupon(UseCouponRequestDTO dto) {
-        try {
-            PurchasedCoupon pc = purchasedCouponDb.findByCode(dto.getPurchasedCouponCode())
-                    .orElseThrow(() -> new NoSuchElementException("Coupon code not found"));
-
-            if (!pc.getCustomerId().equals(dto.getCustomerId())) {
-                return 0;
-            }
-
-            if (pc.getUsedDate() != null) {
-                return 0; 
-            }
-
-            pc.setUsedDate(LocalDateTime.now());
-            purchasedCouponDb.save(pc);
-
-            return pc.getCoupon().getPercentOff();
-
-        } catch (Exception e) {
+        String codeInput = dto.getPurchasedCouponCode() != null ? dto.getPurchasedCouponCode().trim() : "";
+        
+        var purchasedCouponOpt = purchasedCouponDb.findByCode(codeInput);
+        
+        if (purchasedCouponOpt.isEmpty()) {
+            System.out.println("DEBUG: Coupon Code not found: " + codeInput);
             return 0;
         }
+
+        PurchasedCoupon pc = purchasedCouponOpt.get();
+
+        if (!pc.getCustomerId().equals(dto.getCustomerId())) {
+            System.out.println("DEBUG: Customer ID mismatch. Owner: " + pc.getCustomerId() + ", Request: " + dto.getCustomerId());
+            return 0;
+        }
+
+        if (pc.getUsedDate() != null) {
+            System.out.println("DEBUG: Coupon already used on: " + pc.getUsedDate());
+            return 0;
+        }
+
+        pc.setUsedDate(LocalDateTime.now());
+        purchasedCouponDb.save(pc);
+
+        System.out.println("DEBUG: Coupon used successfully. Discount: " + pc.getCoupon().getPercentOff());
+        
+        return pc.getCoupon().getPercentOff();
     }
 
     private CouponResponseDTO convertCouponToDTO(Coupon coupon) {
@@ -181,7 +188,7 @@ public class LoyaltyServiceImpl implements LoyaltyService {
 
     private String getFirstNCharacters(String str, int n) {
         if (str == null) return "XXXXX";
-        String cleanStr = str.replaceAll("[^a-zA-Z0-9]", ""); // remove symbols for code clarity
+        String cleanStr = str.replaceAll("[^a-zA-Z0-9]", "");
         if (cleanStr.length() < n) return cleanStr;
         return cleanStr.substring(0, n);
     }
