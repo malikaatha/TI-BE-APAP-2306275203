@@ -19,7 +19,7 @@ public class LoyaltyController {
         this.loyaltyService = loyaltyService;
     }
 
-    // PBI-BE-L1
+    // PBI-BE-L1 
     @GetMapping("/coupons")
     public ResponseEntity<List<CouponResponseDTO>> getAllAvailableCoupons() {
         return ResponseEntity.ok(loyaltyService.getAllAvailableCoupons());
