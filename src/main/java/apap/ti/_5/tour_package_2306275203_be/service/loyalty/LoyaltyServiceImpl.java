@@ -146,7 +146,7 @@ public class LoyaltyServiceImpl implements LoyaltyService {
                 return 0; 
             }
 
-=            pc.setUsedDate(LocalDateTime.now());
+            pc.setUsedDate(LocalDateTime.now());
             purchasedCouponDb.save(pc);
 
             return pc.getCoupon().getPercentOff();
