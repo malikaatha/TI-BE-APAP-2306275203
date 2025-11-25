@@ -64,6 +64,8 @@ public class LoyaltyServiceImpl implements LoyaltyService {
                 .points(dto.getPoints())
                 .percentOff(dto.getPercentOff())
                 .isDeleted(false)
+                .createdDate(LocalDateTime.now())
+                .updatedDate(LocalDateTime.now())
                 .build();
         return convertCouponToDTO(couponDb.save(coupon));
     }
