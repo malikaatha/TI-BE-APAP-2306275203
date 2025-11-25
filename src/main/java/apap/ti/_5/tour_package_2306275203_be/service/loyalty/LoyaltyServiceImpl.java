@@ -85,37 +85,31 @@ public class LoyaltyServiceImpl implements LoyaltyService {
 
     @Override
     public PurchasedCouponResponseDTO purchaseCoupon(PurchaseCouponRequestDTO dto) {
-        // 1. Get Customer Points
         LoyaltyPoints customerPoints = loyaltyPointsDb.findByCustomerId(dto.getCustomerId())
                 .orElseThrow(() -> new IllegalArgumentException("Customer does not have loyalty points record yet."));
 
-        // 2. Get Coupon
         Coupon coupon = couponDb.findById(dto.getCouponId())
                 .orElseThrow(() -> new NoSuchElementException("Coupon not found"));
 
-        // 3. Validation: Points sufficiency
         if (customerPoints.getPoints() < coupon.getPoints()) {
             throw new IllegalStateException("Insufficient loyalty points.");
         }
 
-        // 4. Deduct Points
         customerPoints.setPoints(customerPoints.getPoints() - coupon.getPoints());
         loyaltyPointsDb.save(customerPoints);
 
-        // 5. Generate Unique Code
-        // Format: [5 char coupon name] - [5 char customer name] - [total purchased]
-        // Note: Karena tidak ada akses ke DB Profile untuk nama customer, kita gunakan 5 char pertama UUID customer sebagai fallback
         String couponPart = getFirstNCharacters(coupon.getName(), 5);
         String customerPart = getFirstNCharacters(dto.getCustomerId().toString(), 5); 
         long count = purchasedCouponDb.count() + 1;
         
         String uniqueCode = String.format("%s-%s-%d", couponPart, customerPart, count).toUpperCase();
 
-        // 6. Create Purchased Coupon
         PurchasedCoupon purchasedCoupon = PurchasedCoupon.builder()
                 .coupon(coupon)
                 .customerId(dto.getCustomerId())
                 .code(uniqueCode)
+                .purchasedDate(LocalDateTime.now())
+                .usedDate(null)
                 .build();
 
         return convertPurchasedCouponToDTO(purchasedCouponDb.save(purchasedCoupon));
@@ -144,18 +138,15 @@ public class LoyaltyServiceImpl implements LoyaltyService {
             PurchasedCoupon pc = purchasedCouponDb.findByCode(dto.getPurchasedCouponCode())
                     .orElseThrow(() -> new NoSuchElementException("Coupon code not found"));
 
-            // Validasi kepemilikan
             if (!pc.getCustomerId().equals(dto.getCustomerId())) {
-                return 0; // Tidak valid
+                return 0;
             }
 
-            // Validasi sudah dipakai atau belum
             if (pc.getUsedDate() != null) {
-                return 0; // Sudah dipakai
+                return 0; 
             }
 
-            // Update usedDate
-            pc.setUsedDate(LocalDateTime.now());
+=            pc.setUsedDate(LocalDateTime.now());
             purchasedCouponDb.save(pc);
 
             return pc.getCoupon().getPercentOff();
@@ -165,7 +156,6 @@ public class LoyaltyServiceImpl implements LoyaltyService {
         }
     }
 
-    // Helper Methods
     private CouponResponseDTO convertCouponToDTO(Coupon coupon) {
         return CouponResponseDTO.builder()
                 .id(coupon.getId())
