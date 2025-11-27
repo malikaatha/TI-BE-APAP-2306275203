@@ -8,7 +8,7 @@ spring:
     url: ${SPRING_DATASOURCE_URL:${DATABASE_URL_DEV}}
     username: ${SPRING_DATASOURCE_USERNAME:${DEV_USERNAME}}
     password: ${SPRING_DATASOURCE_PASSWORD:${DEV_PASSWORD}}
-    driver-class-name: org.postgresql.Driver
+    # driver-class-name will be auto-detected based on URL
 
   mvc:
     hiddenmethod:
@@ -16,6 +16,20 @@ spring:
         enabled: true
   
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    # database-platform will be auto-detected
     hibernate:
-      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:create-drop}
+
+server:
+  port: 8081
+
+sso:
+  auth:
+    base-url: http://localhost:8080
+
+tour:
+  frontend:
+    url: http://localhost:5175
+
+cors:
+  allowed-origins: http://localhost:5173,http://localhost:5175
