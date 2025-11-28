@@ -28,6 +28,11 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/packages/**").hasAnyAuthority("SUPERADMIN", "TOUR_PACKAGE_VENDOR", "CUSTOMER")
+                .requestMatchers("/api/activities/**").hasAnyAuthority("SUPERADMIN", "TOUR_PACKAGE_VENDOR", "CUSTOMER")
+                .requestMatchers("/api/plans/**").hasAnyAuthority("SUPERADMIN", "TOUR_PACKAGE_VENDOR", "CUSTOMER")
+                .requestMatchers("/api/statistics/**").hasAnyAuthority("SUPERADMIN", "TOUR_PACKAGE_VENDOR")
+                .requestMatchers("/api/loyalty/**").hasAnyAuthority("SUPERADMIN", "TOUR_PACKAGE_VENDOR", "CUSTOMER")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);

@@ -73,7 +73,7 @@ jobs:
           printf "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: tour-package-be-config\ndata:\n  DATABASE_URL_PROD: \"${{ secrets.DATABASE_URL_PROD }}\"\n  DATABASE_USERNAME: \"${{ secrets.DATABASE_USERNAME }}\"\n" > k8s/configmap.yaml
           
           # Buat Secret
-          printf "apiVersion: v1\nkind: Secret\nmetadata:\n  name: tour-package-be-secret\ntype: Opaque\nstringData:\n  DATABASE_PASSWORD: \"${{ secrets.DATABASE_PASSWORD }}\"\n  JWT_SECRET_KEY: \"${{ secrets.JWT_SECRET_KEY }}\"\n" > k8s/secret.yaml
+          printf "apiVersion: v1\nkind: Secret\nmetadata:\n  name: tour-package-be-secret\ntype: Opaque\nstringData:\n  DATABASE_PASSWORD: \"${{ secrets.DATABASE_PASSWORD }}\"\n  JWT_SECRET_KEY: \"${{ secrets._SECRET_KEY }}\"\n" > k8s/secret.yaml
 
       - name: Copy files to EC2 server
         uses: appleboy/scp-action@master

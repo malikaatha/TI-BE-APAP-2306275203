@@ -9,7 +9,7 @@ ENV SPRING_PROFILES_ACTIVE=production
 COPY build/libs/*.jar app.jar
 
 # Port yang diekspos oleh aplikasi Spring Boot
-EXPOSE 8080
+EXPOSE 8081
 
 # Perintah untuk menjalankan aplikasi
 ENTRYPOINT ["java", "-jar", "app.jar"]
